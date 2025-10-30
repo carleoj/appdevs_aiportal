@@ -4,7 +4,11 @@ import connectDB from "./db.js";
 import dotenv from "dotenv";
 dotenv.config();
 
+import job from './cron.js'
+
 const app = express();
+
+job.start()
 app.use(express.json());
 app.use(cors());
 
