@@ -8,27 +8,32 @@ const router = express.Router();
 router.get("/fetchall/:category", protectRoute, async (req, res) => {
   try {
     const { category } = req.params;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
+
+    // default pagination values
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
-    // build filter
+    // category filter
     const filter = category === "All" ? {} : { category };
 
+    // fetch tools with pagination
     const tools = await Tool.find(filter)
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .sort({ createdAt: -1 }); // newest first (optional)
 
     const totalTools = await Tool.countDocuments(filter);
 
-    res.send({
+    res.status(200).json({
       tools,
       currentPage: page,
       totalTools,
       totalPages: Math.ceil(totalTools / limit),
+      hasMore: page < Math.ceil(totalTools / limit),
     });
   } catch (error) {
-    console.error("Error in R_tool get all tools", error);
+    console.error("Error in R_tool get all tools:", error);
     res.status(500).json({ message: "R_tool Server Error." });
   }
 });
