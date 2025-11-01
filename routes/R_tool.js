@@ -1,6 +1,7 @@
 import express from "express";
 import protectRoute from "../middleware/auth.js";
 import Tool from "../models/Tool.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -84,33 +85,43 @@ router.get("/liked", protectRoute, async (req, res) => {
 router.post("/like/:toolId", protectRoute, async (req, res) => {
   try {
     const { toolId } = req.params;
+
+    // Validate toolId
+    if (!mongoose.Types.ObjectId.isValid(toolId)) {
+      return res.status(400).json({ message: "Invalid tool ID" });
+    }
+
+    // Find user and tool
     const user = await User.findById(req.user.id);
+    const tool = await Tool.findById(toolId);
 
     if (!user) return res.status(404).json({ message: "User not found" });
+    if (!tool) return res.status(404).json({ message: "Tool not found" });
 
     const alreadyLiked = user.likedTools.includes(toolId);
 
     if (alreadyLiked) {
-      // Unlike
+      // Unlike tool
       user.likedTools.pull(toolId);
-      await Tool.findByIdAndUpdate(toolId, { $inc: { likesCount: -1 } });
+      tool.likesCount = Math.max(0, tool.likesCount - 1);
+      await tool.save();
     } else {
-      // Like
+      // Like tool
       user.likedTools.push(toolId);
-      await Tool.findByIdAndUpdate(toolId, { $inc: { likesCount: 1 } });
+      tool.likesCount = (tool.likesCount || 0) + 1;
+      await tool.save();
     }
 
     await user.save();
 
     res.json({
       message: alreadyLiked ? "Tool unliked" : "Tool liked",
-      likedTools: user.likedTools,
+      likedTools: user.likedTools, // returns array of ObjectIds
     });
   } catch (error) {
     console.error("Error liking/unliking tool:", error);
-    res.status(500).json({ message: "Server error while liking tool" });
+    res.status(500).json({ message: error.message });
   }
 });
-
 
 export default router;

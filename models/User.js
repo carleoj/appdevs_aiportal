@@ -28,10 +28,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
-    likedTools: {
-        type: [String],
-        default: []
-    }
+    likedTools: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Tool"
+        }
+    ],
 }, { timestamps: true });
 
 userSchema.pre("save", async function(next) {
