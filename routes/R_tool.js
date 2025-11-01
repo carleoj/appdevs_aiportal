@@ -2,6 +2,7 @@ import express from "express";
 import protectRoute from "../middleware/auth.js";
 import Tool from "../models/Tool.js";
 import User from "../models/User.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
@@ -116,7 +117,7 @@ router.post("/like/:toolId", protectRoute, async (req, res) => {
 
     res.json({
       message: alreadyLiked ? "Tool unliked" : "Tool liked",
-      likedTools: user.likedTools, // returns array of ObjectIds
+      likedTools: user.likedTools, 
     });
   } catch (error) {
     console.error("Error liking/unliking tool:", error);
