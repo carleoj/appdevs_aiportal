@@ -61,21 +61,13 @@ router.get("/search/:title", protectRoute, async (req, res) => {
 // Get liked tools for the authenticated user with category filter
 router.get("/liked", protectRoute, async (req, res) => {
   try {
-    const { category } = req.query;
     const user = await User.findById(req.user.id).populate("likedTools");
 
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    let likedTools = user.likedTools;
-
-    // If not "All" and not empty → filter by category
-    if (category && category !== "All") {
-      likedTools = likedTools.filter(
-        (tool) => tool.category.toLowerCase() === category.toLowerCase()
-      );
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ likedTools });
+    res.json({ likedTools: user.likedTools });
   } catch (error) {
     console.error("Error fetching liked tools:", error);
     res.status(500).json({ message: "Server error while fetching liked tools" });
