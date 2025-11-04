@@ -18,6 +18,9 @@ app.use("/api/auth", authRoutes);
 import toolRoutes from "./routes/R_tool.js";  
 app.use("/api/tools", toolRoutes);
 
+import aiRoutes from "./routes/R_ai.js";
+app.use("/api/ai", aiRoutes);
+
 
 app.listen(process.env.PORT || 5000, () => {
   console.log("Server running on port 5000");
