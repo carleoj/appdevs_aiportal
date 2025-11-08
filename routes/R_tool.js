@@ -62,7 +62,7 @@ router.get("/search/:title", protectRoute, async (req, res) => {
 router.get("/liked", protectRoute, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-      .populate("likedTools") // assuming likedTools has a 'category' field
+      .populate("likedTools") // get full tool data
       .exec();
 
     if (!user) {
@@ -71,17 +71,22 @@ router.get("/liked", protectRoute, async (req, res) => {
 
     let likedTools = user.likedTools || [];
 
-    // Filter by category if query param exists and isn't "All"
-    if (req.query.category && req.query.category !== "All") {
+    // Filter if ?category is passed and not 'All'
+    const category = req.query.category;
+    if (category && category !== "All") {
       likedTools = likedTools.filter(
-        (tool) => tool.category === req.query.category
+        (tool) =>
+          Array.isArray(tool.category) &&
+          tool.category.includes(category)
       );
     }
 
     return res.status(200).json({ likedTools });
   } catch (error) {
     console.error("Error fetching liked tools:", error);
-    return res.status(500).json({ message: "Server error while fetching liked tools" });
+    return res
+      .status(500)
+      .json({ message: "Server error while fetching liked tools" });
   }
 });
 
