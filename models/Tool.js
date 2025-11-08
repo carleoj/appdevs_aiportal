@@ -26,6 +26,23 @@ const toolSchema = new mongoose.Schema({
     type: [String],  
     required: true
   },
+  comments: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User", 
+          required: true,
+        },
+        text: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
 }, {timestamps: true});
 
 const Tool = mongoose.model('Tool', toolSchema);

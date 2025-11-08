@@ -6,6 +6,38 @@ import mongoose from "mongoose";
 
 const router = express.Router();
 
+router.post("/:toolId/comments", protectRoute, async (req, res) => {
+  const { toolId } = req.params;
+  const { text } = req.body;
+  const userId = req.user._id; 
+
+  if (!text || text.trim() === "") {
+    return res.status(400).json({ message: "Comment cannot be empty." });
+  }
+
+  try {
+    const tool = await Tool.findById(toolId);
+    if (!tool) return res.status(404).json({ message: "Tool not found." });
+
+    // Add comment
+    const comment = { userId, text };
+    tool.comments.push(comment);
+
+    await tool.save();
+
+    // Optionally populate the user info in response
+    const populatedTool = await Tool.findById(toolId).populate(
+      "comments.userId",
+      "username email"
+    );
+
+    res.status(201).json({ message: "Comment added.", comments: populatedTool.comments });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
 // infinite loading pagination
 router.get("/fetchall/:category", protectRoute, async (req, res) => {
   try {
