@@ -62,31 +62,39 @@ router.get("/search/:title", protectRoute, async (req, res) => {
 router.get("/liked", protectRoute, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
-      .populate("likedTools") // get full tool data
+      .populate("likedTools")
       .exec();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const category = req.query.category;
     let likedTools = user.likedTools || [];
 
-    // Filter if ?category is passed and not 'All'
-    const category = req.query.category;
     if (category && category !== "All") {
-      likedTools = likedTools.filter(
-        (tool) =>
-          Array.isArray(tool.category) &&
-          tool.category.includes(category)
-      );
+      likedTools = likedTools.filter((tool) => {
+        if (!tool.category) return false;
+
+        // If tool.category is an array
+        if (Array.isArray(tool.category)) {
+          return tool.category.some(
+            (c) => c.toLowerCase() === category.toLowerCase()
+          );
+        }
+
+        // If tool.category is a string
+        return tool.category.toLowerCase() === category.toLowerCase();
+      });
     }
 
     return res.status(200).json({ likedTools });
   } catch (error) {
     console.error("Error fetching liked tools:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error while fetching liked tools" });
+    return res.status(500).json({
+      message: "Server error while fetching liked tools",
+      error: error.message,
+    });
   }
 });
 
