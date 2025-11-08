@@ -54,8 +54,13 @@ router.get("/fetchall/:category", protectRoute, async (req, res) => {
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 })
-      .populate("comments.userId", "username email")
       .lean(); // convert to plain JS object
+
+    // Add comment count for each tool
+    const toolsWithCommentCount = tools.map((tool) => ({
+      ...tool,
+      commentsCount: tool.comments ? tool.comments.length : 0,
+    }));
 
     const totalTools = await Tool.countDocuments(filter);
 
