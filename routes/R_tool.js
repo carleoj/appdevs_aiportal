@@ -61,6 +61,7 @@ router.get("/search/:title", protectRoute, async (req, res) => {
 // Get liked tools for the authenticated user with category filter
 router.get("/liked", protectRoute, async (req, res) => {
   try {
+    const { category } = req.query; // optional query param
     const user = await User.findById(req.user.id)
       .populate("likedTools")
       .exec();
@@ -69,7 +70,6 @@ router.get("/liked", protectRoute, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const { category } = req.query; // optional query param
 
     let likedTools = user.likedTools || [];
 
