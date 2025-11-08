@@ -68,12 +68,21 @@ router.get("/liked", protectRoute, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    console.log("Query params:", req.query);
 
-    return res.status(200).json({ likedTools: user.likedTools });
+    const { category } = req.query; // optional query param
+
+    let likedTools = user.likedTools || [];
+
+    // Filter by category if provided and not "All"
+    if (category && category !== "All") {
+      likedTools = likedTools.filter(
+        (tool) => tool.category && tool.category === category
+      );
+    }
+
+    return res.status(200).json({ likedTools });
   } catch (error) {
     console.error("Error fetching liked tools:", error);
-    console.log("Query params:", req.query);
     return res.status(500).json({ message: "Server error while fetching liked tools" });
   }
 });
