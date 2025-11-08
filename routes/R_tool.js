@@ -43,24 +43,29 @@ router.get("/fetchall/:category", protectRoute, async (req, res) => {
   try {
     const { category } = req.params;
 
-    // default pagination values
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
-    // category filter
     const filter = category === "All" ? {} : { category };
 
-    // fetch tools with pagination
+    // fetch tools with comments count
     const tools = await Tool.find(filter)
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 }); // newest first (optional)
+      .sort({ createdAt: -1 })
+      .lean(); // convert to plain JS object
+
+    // Add comment count for each tool
+    const toolsWithCommentCount = tools.map((tool) => ({
+      ...tool,
+      commentsCount: tool.comments ? tool.comments.length : 0,
+    }));
 
     const totalTools = await Tool.countDocuments(filter);
 
     res.status(200).json({
-      tools,
+      tools: toolsWithCommentCount,
       currentPage: page,
       totalTools,
       totalPages: Math.ceil(totalTools / limit),

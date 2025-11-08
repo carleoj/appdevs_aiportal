@@ -45,6 +45,14 @@ const toolSchema = new mongoose.Schema({
     ],
 }, {timestamps: true});
 
+// Virtual field for comment count
+toolSchema.virtual("commentsCount").get(function () {
+  return this.comments ? this.comments.length : 0;
+});
+
+toolSchema.set("toJSON", { virtuals: true });
+toolSchema.set("toObject", { virtuals: true });
+
 const Tool = mongoose.model('Tool', toolSchema);
 
 export default Tool;    
