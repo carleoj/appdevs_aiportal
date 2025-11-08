@@ -61,16 +61,21 @@ router.get("/search/:title", protectRoute, async (req, res) => {
 // Get liked tools for the authenticated user with category filter
 router.get("/liked", protectRoute, async (req, res) => {
   try {
-    const category = req.query.category; // optional
-    const user = await User.findById(req.user.id).populate("likedTools").exec();
+    const user = await User.findById(req.user.id)
+      .populate("likedTools") // assuming likedTools has a 'category' field
+      .exec();
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     let likedTools = user.likedTools || [];
 
-    // filter by category if provided and not "All"
-    if (category && category !== "All") {
-      likedTools = likedTools.filter(tool => tool.category === category);
+    // Filter by category if query param exists and isn't "All"
+    if (req.query.category && req.query.category !== "All") {
+      likedTools = likedTools.filter(
+        (tool) => tool.category === req.query.category
+      );
     }
 
     return res.status(200).json({ likedTools });
@@ -79,7 +84,6 @@ router.get("/liked", protectRoute, async (req, res) => {
     return res.status(500).json({ message: "Server error while fetching liked tools" });
   }
 });
-
 
 // Like or unlike a tool
 router.post("/like/:toolId", protectRoute, async (req, res) => {
