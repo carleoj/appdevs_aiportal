@@ -9,7 +9,7 @@ const router = express.Router();
 router.post("/:toolId/comments", protectRoute, async (req, res) => {
   const { toolId } = req.params;
   const { text } = req.body;
-  const userId = req.user._id; 
+  const userId = req.user._id;
 
   if (!text || text.trim() === "") {
     return res.status(400).json({ message: "Comment cannot be empty." });
@@ -31,7 +31,28 @@ router.post("/:toolId/comments", protectRoute, async (req, res) => {
       "username email"
     );
 
-    res.status(201).json({ message: "Comment added.", comments: populatedTool.comments });
+    res
+      .status(201)
+      .json({ message: "Comment added.", comments: populatedTool.comments });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
+router.get("/:toolId/comments", async (req, res) => {
+  const { toolId } = req.params;
+
+  try {
+    const tool = await Tool.findById(toolId)
+      .populate("comments.userId", "username email") // populate user info
+      .select("comments"); // return only comments field (optional)
+
+    if (!tool) {
+      return res.status(404).json({ message: "Tool not found." });
+    }
+
+    res.status(200).json({ comments: tool.comments });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error." });
@@ -55,7 +76,9 @@ router.get("/fetchall/:category", protectRoute, async (req, res) => {
     const tools = await Tool.find(filter)
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 }); // newest first (optional)
+      .sort({ createdAt: -1 })
+      .populate("comments.userId", "username email"); // <--- must populate here
+    res.status(200).json({ tools });
 
     const totalTools = await Tool.countDocuments(filter);
 
@@ -93,9 +116,7 @@ router.get("/search/:title", protectRoute, async (req, res) => {
 // Get liked tools for the authenticated user with category filter
 router.get("/liked", protectRoute, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .populate("likedTools")
-      .exec();
+    const user = await User.findById(req.user.id).populate("likedTools").exec();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -165,7 +186,7 @@ router.post("/like/:toolId", protectRoute, async (req, res) => {
 
     res.json({
       message: alreadyLiked ? "Tool unliked" : "Tool liked",
-      likedTools: user.likedTools, 
+      likedTools: user.likedTools,
     });
   } catch (error) {
     console.error("Error liking/unliking tool:", error);
