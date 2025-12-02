@@ -43,9 +43,6 @@ router.post("/ask", async (req, res) => {
 
     const systemMessage = `You are AIPortal Assistant, a knowledgeable AI companion specializing in helping users discover and understand AI tools. 
 
-Latest Available Tools :
-${JSON.stringify(toolCatalog, null, 2)}
-
 Categories Overview:
 ${Object.entries(categories)
   .map(([category, tools]) => `${category}: ${tools.join(", ")}`)
