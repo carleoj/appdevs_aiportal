@@ -65,7 +65,7 @@ You are friendly, professional, and always aim to provide practical, accurate in
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "mistralai/mistral-7b-instruct",
+        model: "deepseek/deepseek-v3.2-speciale",
         messages: [
           {
             role: "system",
