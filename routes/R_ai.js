@@ -15,27 +15,22 @@ router.post("/ask", async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id; // logged-in user ID
     // Fetch all tools from the database
     const tools = await Tool.find({});
-
-    const likedTools = await Tool.find({ likedBy: userId });
-
-    const toolCatalog = likedTools.map((tool) => ({
+    
+    // Create a structured tool collection for the AI
+    const toolCatalog = tools.map(tool => ({
       title: tool.title,
       category: tool.category,
       description: tool.caption,
       link: tool.link,
-      likesCount: tool.likesCount || 0,
+      likesCount: tool.likesCount || 0
     }));
 
+    // Create a categorized tool summary
     const categories = {};
-    likedTools.forEach((tool) => {
-      tool.category.forEach((cat) => {
+    tools.forEach(tool => {
+      tool.category.forEach(cat => {
         if (!categories[cat]) categories[cat] = [];
         categories[cat].push(tool.title);
       });
@@ -43,19 +38,13 @@ router.post("/ask", async (req, res) => {
 
     const systemMessage = `You are AIPortal Assistant, a knowledgeable AI companion specializing in helping users discover and understand AI tools. 
 
-Categories Overview:
-${Object.entries(categories)
-  .map(([category, tools]) => `${category}: ${tools.join(", ")}`)
-  .join("\n")}
-
-Liked Tools:
+Latest Available Tools :
 ${JSON.stringify(toolCatalog, null, 2)}
 
 Categories Overview:
 ${Object.entries(categories).map(([category, tools]) => 
   `${category}: ${tools.join(', ')}`
 ).join('\n')}
-
 
 Your main functions include:
 1. Finding and recommending specific Web Applications, AI tools from our collection based on user needs
@@ -80,7 +69,7 @@ You are friendly, professional, and always aim to provide practical, accurate in
         messages: [
           {
             role: "system",
-            content: systemMessage,
+            content: systemMessage
           },
           {
             role: "user",
