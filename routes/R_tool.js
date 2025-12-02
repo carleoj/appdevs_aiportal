@@ -66,7 +66,6 @@ router.get("/fetchall/:category", protectRoute, async (req, res) => {
 
     // default pagination values
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
     // category filter
@@ -75,7 +74,6 @@ router.get("/fetchall/:category", protectRoute, async (req, res) => {
     // fetch tools with pagination
     const tools = await Tool.find(filter)
       .skip(skip)
-      .limit(limit)
       .sort({ createdAt: -1 })
       .populate("comments.userId", "username email"); // <--- must populate here
     res.status(200).json({ tools });
