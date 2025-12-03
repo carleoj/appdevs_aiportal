@@ -64,32 +64,36 @@ router.get("/fetchall/:category", protectRoute, async (req, res) => {
   try {
     const { category } = req.params;
 
-    // default pagination values
-    const page = parseInt(req.query.page, 10) || 1;
-    const skip = (page - 1) * limit;
+    // optional pagination
+    const page = parseInt(req.query.page, 10);
+    const limit = parseInt(req.query.limit, 10); // only used if provided
+
+    const skip = page && limit ? (page - 1) * limit : 0;
 
     // category filter
     const filter = category === "All" ? {} : { category };
 
-    // fetch tools with pagination
-    const tools = await Tool.find(filter)
-      .skip(skip)
-      .sort({ createdAt: -1 })
-      .populate("comments.userId", "username email"); // <--- must populate here
-    res.status(200).json({ tools });
+    let query = Tool.find(filter).sort({ createdAt: -1 })
+      .populate("comments.userId", "username email");
 
+    // only apply skip/limit if pagination parameters exist
+    if (page && limit) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const tools = await query;
     const totalTools = await Tool.countDocuments(filter);
 
     res.status(200).json({
       tools,
-      currentPage: page,
+      currentPage: page || null,
       totalTools,
-      totalPages: Math.ceil(totalTools / limit),
-      hasMore: page < Math.ceil(totalTools / limit),
+      totalPages: page && limit ? Math.ceil(totalTools / limit) : null,
+      hasMore: page && limit ? page < Math.ceil(totalTools / limit) : false,
     });
   } catch (error) {
-    console.error("Error in R_tool get all tools:", error);
-    res.status(500).json({ message: "R_tool Server Error." });
+    console.error("Error in fetchall route:", error);
+    res.status(500).json({ message: "Server Error." });
   }
 });
 
